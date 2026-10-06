@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: stg_bookings
+    description: >
+      One row per booking, cleaned and type-cast, with arrival/departure
+      dates derived, room-type-mismatch and ADR-outlier flags added, and
+      is_stay_honored computed from reservation_status (the reliable
+      signal - it distinguishes Check-Out from Canceled from No-Show,
+      where the raw is_canceled flag lumps the latter two together).
+    columns:
+      - name: booking_row_id
+        tests: [unique, not_null]
+      - name: hotel
+        tests:
+          - accepted_values:
+              values: ['Resort Hotel', 'City Hotel']
+      - name: reservation_status
+        tests:
+          - accepted_values:
+              values: ['Check-Out', 'Canceled', 'No-Show']
+      - name: arrival_date
+        tests: [not_null]
+      - name: total_nights
+        tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+      - name: lead_time
+        tests:
+          - accepted_range:
+              arguments:
+                min_value: 0

@@ -1,0 +1,36 @@
+name: 'hotel_booking_demand'
+version: '1.0.0'
+config-version: 2
+
+profile: 'hotel_booking_demand'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  hotel_booking_demand:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
+
+# NOTE ON SCHEMA NAMING: no +schema overrides above, on purpose. dbt's
+# default generate_schema_name macro CONCATENATES the profile's target
+# schema with any custom +schema config - "analytics" + "marts" lands
+# tables in "analytics_marts", not "analytics". Found this by actually
+# running dbt against Postgres while building the agent-observability
+# project and confirming the resulting schema names with \dn - the
+# dashboard and every script here query "analytics.<table>" directly, so
+# everything materializes straight into the profile's target schema
+# instead. If you want staging/intermediate/marts split into their own
+# schemas, add a macros/generate_schema_name.sql override (the standard
+# dbt pattern) and update every downstream query to match.

@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: dim_hotel
+    description: One row per hotel (Resort, City), with inferred room capacity.
+    columns:
+      - name: hotel
+        tests: [unique, not_null]
+
+  - name: dim_date
+    description: Calendar date spine, July 2015 through September 2017.
+    columns:
+      - name: date_day
+        tests: [unique, not_null]
+
+  - name: fact_bookings
+    description: >
+      One row per booking (booking grain, not room-night grain) with
+      derived lead-time buckets, room-type-mismatch flag, and booking
+      value (nulled for flagged ADR outliers).
+    columns:
+      - name: booking_row_id
+        tests: [unique, not_null]
+      - name: hotel
+        tests:
+          - relationships:
+              to: ref('dim_hotel')
+              field: hotel
+
+  - name: fact_room_nights
+    description: >
+      Grain: one row per hotel per calendar night, bounded to each hotel's
+      observed data range. Denominator for occupancy/RevPAR uses the
+      inferred capacity from int_hotel_capacity.
+    columns:
+      - name: hotel
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_hotel')
+              field: hotel
+      - name: date_day
+        tests: [not_null]
+      - name: rooms_occupied
+        tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+
+  - name: mart_daily_metrics
+    description: >
+      Headline KPIs by hotel and day: occupancy rate, ADR, RevPAR. Primary
+      table the dashboard's trend charts read from.
+    columns:
+      - name: occupancy_rate
+        tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1.05   # allow small slack: capacity is an inferred floor, so occasional nights can read slightly over 100%
+
+  - name: mart_cancellation_risk
+    description: >
+      Cancellation rate segmented by hotel, lead-time bucket, deposit
+      type, market segment, and customer type. The revenue-management
+      angle on cancellation risk, as a reporting table rather than an ML
+      classifier.
+    columns:
+      - name: cancellation_rate
+        tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: mart_hotel_comparison
+    description: One row per hotel, summarizing booking and occupancy performance side by side.
+    columns:
+      - name: hotel
+        tests: [unique, not_null]
+
+  - name: mart_room_assignment_mismatch
+    description: >
+      Reserved-vs-assigned room type combinations for honored stays, with
+      booking counts and average ADR per combination.
+    columns:
+      - name: hotel
+        tests: [not_null]

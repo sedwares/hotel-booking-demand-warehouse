@@ -1,0 +1,17 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# dbt
+dbt/hotel_booking_demand/target/
+dbt/hotel_booking_demand/dbt_packages/
+dbt/hotel_booking_demand/logs/
+
+# airflow
+airflow/dags/__pycache__/
+*.log
+
+# data (kept: data/raw/hotel_bookings.csv is committed intentionally - see README)
+pgdata/

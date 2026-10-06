@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: bookings
+        description: >
+          Raw landing of the Antonio, Almeida & Nunes (2019) Hotel Booking
+          Demand dataset - one row per booking made at either hotel,
+          arrivals July 2015 through August 2017.
+        loaded_at_field: reservation_status_date
+        columns:
+          - name: booking_row_id
+            tests:
+              - unique
+              - not_null

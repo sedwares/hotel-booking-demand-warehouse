@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: int_booking_nights
+    description: >
+      One row per hotel per assigned room type per night actually stayed
+      (honored stays only - cancellations and no-shows excluded, and
+      zero-night bookings excluded since there's no night to generate).
+      Revenue is nulled out for the flagged ADR outlier rows rather than
+      the row being dropped.
+    columns:
+      - name: hotel
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+
+  - name: int_hotel_capacity
+    description: >
+      One row per hotel with an assumed room-inventory count, inferred as
+      the maximum number of rooms occupied concurrently on any single
+      night in the dataset. See model SQL comment for the full reasoning
+      and its stated limitation (a floor, not a confirmed inventory count).
+    columns:
+      - name: hotel
+        tests: [unique, not_null]
+      - name: assumed_capacity
+        tests:
+          - accepted_range:
+              arguments:
+                min_value: 1

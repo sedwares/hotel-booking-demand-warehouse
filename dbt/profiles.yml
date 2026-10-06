@@ -1,0 +1,12 @@
+hotel_booking_demand:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('HOTEL_DB_HOST', 'localhost') }}"
+      port: "{{ env_var('HOTEL_DB_PORT', '5433') | as_number }}"
+      user: "{{ env_var('HOTEL_DB_USER', 'hotel_admin') }}"
+      password: "{{ env_var('HOTEL_DB_PASSWORD', 'hotel_pass') }}"
+      dbname: "{{ env_var('HOTEL_DB_NAME', 'hotel_booking_dw') }}"
+      schema: analytics
+      threads: 4

@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: hotel_booking_dw_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hotel_admin
+      POSTGRES_PASSWORD: hotel_pass
+      POSTGRES_DB: hotel_booking_dw
+    ports:
+      - "5433:5432"   # offset from project 1's 5432 so both can run side by side
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel_admin -d hotel_booking_dw"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  airflow:
+    image: apache/airflow:2.9.3
+    container_name: hotel_booking_dw_airflow
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+      _PIP_ADDITIONAL_REQUIREMENTS: "dbt-postgres==1.8.2 psycopg2-binary pandas"
+      HOTEL_DB_HOST: postgres
+      HOTEL_DB_PORT: 5432
+      HOTEL_DB_NAME: hotel_booking_dw
+      HOTEL_DB_USER: hotel_admin
+      HOTEL_DB_PASSWORD: hotel_pass
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./dbt:/opt/airflow/dbt
+      - ./scripts:/opt/airflow/scripts
+      - ./data:/opt/airflow/data
+      - airflow_home:/opt/airflow
+    ports:
+      - "8081:8080"   # offset from project 1's 8080
+    command: standalone
+
+volumes:
+  pgdata:
+  airflow_home:
